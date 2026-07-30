@@ -2,7 +2,7 @@
 $host = "localhost";
 $dbname = "ecommerce_db";
 $username = "root";
-$password = "Salah@sql12";
+$password = "";
 
 try {
     $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8", $username, $password);
