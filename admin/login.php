@@ -20,8 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $admin = $stmt->fetch(PDO::FETCH_ASSOC);
 
         // Verify password (supporting your brother's MD5 setup or standard password hashing)
-        if ($admin && (md5($password) === $admin['mot_de_passe'] || password_verify($password, $admin['mot_de_passe']))) {
-            // Set session variables
+if ($admin && ($password === $admin['mot_de_passe'] || md5($password) === $admin['mot_de_passe'] || password_verify($password, $admin['mot_de_passe']))) {            // Set session variables
             $_SESSION['id_utilisateur'] = $admin['id_utilisateur'];
             $_SESSION['nom'] = $admin['nom'];
             $_SESSION['prenom'] = $admin['prenom'];
