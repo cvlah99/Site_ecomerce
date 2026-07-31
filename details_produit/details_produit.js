@@ -16,15 +16,20 @@ window.addEventListener('scroll', function() {
 const btnDiminuer = document.getElementById('diminuer');
 const btnAugmenter = document.getElementById('augmenter');
 const quantiteEl = document.getElementById('quantite');
+const quantiteInput = document.getElementById('quantite_input');
 
 if(btnDiminuer && btnAugmenter) {
     btnDiminuer.addEventListener('click', function() {
         let q = parseInt(quantiteEl.textContent);
-        if(q > 1) quantiteEl.textContent = q - 1;
+        if(q > 1) {
+            quantiteEl.textContent = q - 1;
+            if(quantiteInput) quantiteInput.value = q - 1;
+        }
     });
 
     btnAugmenter.addEventListener('click', function() {
         let q = parseInt(quantiteEl.textContent);
         quantiteEl.textContent = q + 1;
+        if(quantiteInput) quantiteInput.value = q + 1;
     });
 }
