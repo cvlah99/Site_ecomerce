@@ -1,0 +1,84 @@
+<?php
+session_start();
+require_once '../config/connexion_db.php';
+
+if(!isset($_SESSION['user_id'])){
+    header("location:../connexion/connexion.php");
+    exit();
+}
+
+if(!isset($_POST['action'], $_POST['id_produit'])){
+    header("location:panier.php");
+    exit();
+}
+
+$id_client = $_SESSION['id_client'];
+$id_produit = intval($_POST['id_produit']);
+$action = $_POST['action'];
+
+$stmt_panier = $pdo->prepare("SELECT id_panier FROM paniers WHERE id_client = :id_client");
+$stmt_panier->execute([':id_client' => $id_client]);
+$panier = $stmt_panier->fetch(PDO::FETCH_ASSOC);
+
+if(!$panier){
+    $stmt_create = $pdo->prepare("INSERT INTO paniers (id_client, date_creation, montant_total) VALUES (:id_client, CURDATE(), 0)");
+    $stmt_create->execute([':id_client' => $id_client]);
+    $id_panier = $pdo->lastInsertId();
+} else {
+    $id_panier = $panier['id_panier'];
+}
+
+if($action === 'ajouter'){
+    $quantite = isset($_POST['quantite']) ? intval($_POST['quantite']) : 1;
+    
+    $stmt_check = $pdo->prepare("SELECT quantite_produit FROM panier_produits WHERE id_panier = :id_panier AND id_produit = :id_produit");
+    $stmt_check->execute([':id_panier' => $id_panier, ':id_produit' => $id_produit]);
+    $existe = $stmt_check->fetch(PDO::FETCH_ASSOC);
+    
+    if($existe){
+        $stmt_update = $pdo->prepare("UPDATE panier_produits SET quantite_produit = quantite_produit + :quantite WHERE id_panier = :id_panier AND id_produit = :id_produit");
+        $stmt_update->execute([':quantite' => $quantite, ':id_panier' => $id_panier, ':id_produit' => $id_produit]);
+    } else {
+        $stmt_insert = $pdo->prepare("INSERT INTO panier_produits (id_panier, id_produit, quantite_produit) VALUES (:id_panier, :id_produit, :quantite)");
+        $stmt_insert->execute([':id_panier' => $id_panier, ':id_produit' => $id_produit, ':quantite' => $quantite]);
+    }
+    
+    $_SESSION['succes'] = "Produit ajouté au panier avec succès !";
+    header("location:panier.php");
+    exit();
+}
+
+if($action === 'augmenter'){
+    $stmt_update = $pdo->prepare("UPDATE panier_produits SET quantite_produit = quantite_produit + 1 WHERE id_panier = :id_panier AND id_produit = :id_produit");
+    $stmt_update->execute([':id_panier' => $id_panier, ':id_produit' => $id_produit]);
+    header("location:panier.php");
+    exit();
+}
+
+if($action === 'diminuer'){
+    $stmt_check = $pdo->prepare("SELECT quantite_produit FROM panier_produits WHERE id_panier = :id_panier AND id_produit = :id_produit");
+    $stmt_check->execute([':id_panier' => $id_panier, ':id_produit' => $id_produit]);
+    $item = $stmt_check->fetch(PDO::FETCH_ASSOC);
+    
+    if($item && $item['quantite_produit'] > 1){
+        $stmt_update = $pdo->prepare("UPDATE panier_produits SET quantite_produit = quantite_produit - 1 WHERE id_panier = :id_panier AND id_produit = :id_produit");
+        $stmt_update->execute([':id_panier' => $id_panier, ':id_produit' => $id_produit]);
+    } else {
+        $stmt_delete = $pdo->prepare("DELETE FROM panier_produits WHERE id_panier = :id_panier AND id_produit = :id_produit");
+        $stmt_delete->execute([':id_panier' => $id_panier, ':id_produit' => $id_produit]);
+    }
+    header("location:panier.php");
+    exit();
+}
+
+if($action === 'supprimer'){
+    $stmt_delete = $pdo->prepare("DELETE FROM panier_produits WHERE id_panier = :id_panier AND id_produit = :id_produit");
+    $stmt_delete->execute([':id_panier' => $id_panier, ':id_produit' => $id_produit]);
+    $_SESSION['succes'] = "Produit supprimé du panier !";
+    header("location:panier.php");
+    exit();
+}
+
+header("location:panier.php");
+exit();
+?>

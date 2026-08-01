@@ -1,0 +1,269 @@
+:root {
+    --vert: #2D6A4F;
+    --or: #C9A84C;
+    --beige: #F8F4E3;
+}
+
+body {
+    font-family: 'Lato', sans-serif;
+    background: #fff;
+}
+
+#mainNavbar {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    padding: 12px 0;
+    transition: all 0.3s ease;
+}
+
+#mainNavbar.navbar-scrolled {
+    padding: 8px 0;
+    box-shadow: 0 2px 20px rgba(0,0,0,0.1) !important;
+}
+
+.logo-text {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--vert);
+}
+
+.logo-vital { color: var(--or); }
+
+.nav-link {
+    color: #333 !important;
+    font-size: 0.9rem;
+    padding: 8px 15px !important;
+    transition: color 0.3s ease;
+}
+
+.nav-link:hover, .nav-link.active { color: var(--vert) !important; }
+
+.btn-gold {
+    background: var(--or);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-gold:hover {
+    background: #D4B85A;
+    color: white;
+}
+
+.btn-outline-success {
+    color: var(--vert) !important;
+    border-color: var(--vert) !important;
+    border-radius: 8px;
+    font-weight: 600;
+}
+
+.btn-outline-success:hover {
+    background: var(--vert) !important;
+    color: white !important;
+}
+
+.contact-banner {
+    background: linear-gradient(135deg, var(--vert), #40916C);
+    padding: 120px 0 60px;
+}
+
+.banner-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 3rem;
+    font-weight: 700;
+    color: white;
+}
+
+.banner-subtitle {
+    color: rgba(255,255,255,0.8);
+    font-size: 1.1rem;
+}
+
+.info-card {
+    background: var(--beige);
+    border-radius: 16px;
+    height: 100%;
+}
+
+.form-card {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.06);
+}
+
+.info-title {
+    font-family: 'Playfair Display', serif;
+    font-weight: 700;
+    color: var(--vert);
+}
+
+.info-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+}
+
+.info-icon {
+    width: 45px;
+    height: 45px;
+    background: var(--vert);
+    color: white;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+.form-label {
+    font-weight: 600;
+    color: #333;
+    font-size: 0.9rem;
+    margin-bottom: 6px;
+}
+
+.form-control {
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    padding: 12px 15px;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    border-color: var(--vert);
+    box-shadow: 0 0 0 3px rgba(45, 106, 79, 0.15);
+}
+
+textarea.form-control {
+    resize: vertical;
+    min-height: 150px;
+}
+
+.conditions-list {
+    list-style: none;
+    padding: 8px 0 0;
+    margin: 0;
+}
+
+.conditions-list li {
+    font-size: 0.82rem;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #dc3545;
+    transition: color 0.3s ease;
+}
+
+.conditions-list li.valid {
+    color: var(--vert);
+}
+
+.conditions-list li i {
+    font-size: 0.75rem;
+}
+
+.btn-envoyer {
+    background: var(--vert);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 14px 40px;
+    font-size: 1rem;
+    font-weight: 700;
+    transition: all 0.3s ease;
+}
+
+.btn-envoyer:hover {
+    background: #40916C;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(45, 106, 79, 0.3);
+    color: white;
+}
+
+.message-erreur {
+    background: #fff5f5;
+    border-left: 4px solid #dc3545;
+    border-radius: 8px;
+    padding: 12px 15px;
+    color: #dc3545;
+    font-size: 0.9rem;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+}
+
+.message-succes {
+    background: #f0fff4;
+    border-left: 4px solid var(--vert);
+    border-radius: 8px;
+    padding: 12px 15px;
+    color: var(--vert);
+    font-size: 0.9rem;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+}
+
+.social-icon {
+    width: 38px;
+    height: 38px;
+    background: var(--vert);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.social-icon:hover {
+    background: var(--or);
+    color: white;
+}
+
+.footer-section {
+    background: #1a1a2e;
+    color: #aaa;
+}
+
+.logo-text-footer {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: white;
+}
+
+.logo-vital-footer { color: var(--or); }
+
+.footer-title {
+    color: white;
+    font-weight: 700;
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.footer-links {
+    list-style: none;
+    padding: 0;
+}
+
+.footer-links li {
+    margin-bottom: 10px;
+    font-size: 0.9rem;
+}
+
+.footer-links a {
+    color: #aaa;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.footer-links a:hover { color: var(--or); }

@@ -87,7 +87,7 @@ if ($admin && ($password === $admin['mot_de_passe'] || md5($password) === $admin
         </form>
         
         <div class="text-center mt-3">
-            <a href="../index.php" class="text-muted small text-decoration-none"><i class="bi bi-arrow-left me-1"></i>Retour au site public</a>
+            <a href="../acceulle/acceulle.php" class="text-muted small text-decoration-none"><i class="bi bi-arrow-left me-1"></i>Retour au site public</a>
         </div>
     </div>
 

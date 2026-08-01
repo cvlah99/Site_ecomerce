@@ -153,7 +153,7 @@ session_start();
                 </div>
 
                 <div class="lien-connexion">
-                    Déjà un compte ? <a href="../connexion/connexion.html">Connectez-vous</a>
+                    Déjà un compte ? <a href="../connexion/connexion.php">Connectez-vous</a>
                 </div>
 
             </form>

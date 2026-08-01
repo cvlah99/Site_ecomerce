@@ -1,11 +1,22 @@
 <?php
 session_start();
+$nb_panier = 0;
 require_once '../config/connexion_db.php';
-$stmt = $pdo->prepare("SELECT p.*, c.nom as nom_categorie 
-                        FROM produits p 
-                        JOIN categories c ON p.id_categorie = c.id_categorie 
-                        ORDER BY p.date_ajout DESC");
-$stmt->execute();
+if(isset($_GET['categorie']) && is_numeric($_GET['categorie'])){
+    $id_cat = intval($_GET['categorie']);
+    $stmt = $pdo->prepare("SELECT p.*, c.nom as nom_categorie 
+                            FROM produits p 
+                            JOIN categories c ON p.id_categorie = c.id_categorie 
+                            WHERE p.id_categorie = :id
+                            ORDER BY p.date_ajout DESC");
+    $stmt->execute([':id' => $id_cat]);
+} else {
+    $stmt = $pdo->prepare("SELECT p.*, c.nom as nom_categorie 
+                            FROM produits p 
+                            JOIN categories c ON p.id_categorie = c.id_categorie 
+                            ORDER BY p.date_ajout DESC");
+    $stmt->execute();
+}
 $produits = $stmt->fetchAll(PDO::FETCH_ASSOC);
 $stmt_categories = $pdo->prepare("SELECT * FROM categories ORDER BY ordre_affichage ASC");
 $stmt_categories->execute();
@@ -27,7 +38,7 @@ $categories = $stmt_categories->fetchAll(PDO::FETCH_ASSOC);
 
 <nav class="navbar navbar-expand-lg navbar-light fixed-top shadow-sm" id="mainNavbar">
     <div class="container">
-        <a class="navbar-brand d-flex align-items-center" href="../acceulle/acceulle.html">
+        <a class="navbar-brand d-flex align-items-center" href="../acceulle/acceulle.php">
             <span class="logo-text">Soin<span class="logo-vital">Vital</span></span>
         </a>
         <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -36,36 +47,41 @@ $categories = $stmt_categories->fetchAll(PDO::FETCH_ASSOC);
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav mx-auto">
                 <li class="nav-item">
-                    <a class="nav-link fw-semibold" href="../acceulle/acceulle.html">Accueil</a>
+                    <a class="nav-link fw-semibold" href="../acceulle/acceulle.php">Accueil</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link fw-semibold active" href="#">Catalogue</a>
+                    <a class="nav-link fw-semibold active" href="catalogue.php">Catalogue</a>
                 </li>
                 <li class="nav-item dropdown">
                     <a class="nav-link fw-semibold dropdown-toggle" href="#" data-bs-toggle="dropdown">Catégories</a>
                     <ul class="dropdown-menu border-0 shadow">
                         <?php foreach($categories as $cat): ?>
-                        <li><a class="dropdown-item" href="#"><i class="bi bi-tag me-2 text-success"></i><?php echo $cat['nom']; ?></a></li>
+                        <li><a class="dropdown-item" href="catalogue.php?categorie=<?php echo $cat['id_categorie']; ?>"><i class="bi bi-tag me-2 text-success"></i><?php echo $cat['nom']; ?></a></li>
                         <?php endforeach; ?>
                     </ul>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link fw-semibold" href="#">À propos</a>
+                    <a class="nav-link fw-semibold" href="../apropos/apropos.php">À propos</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link fw-semibold" href="#">Contact</a>
+                    <a class="nav-link fw-semibold" href="../contact/contact.php">Contact</a>
                 </li>
             </ul>
             <div class="d-flex align-items-center gap-3">
                 <a href="#" class="nav-icon position-relative">
                     <i class="bi bi-search fs-5"></i>
                 </a>
-                <a href="#" class="nav-icon position-relative">
+                <a href="../panier/panier.php" class="nav-icon position-relative">
                     <i class="bi bi-bag fs-5"></i>
-                    <span class="badge-cart">0</span>
+                    <span class="badge-cart"><?php echo $nb_panier; ?></span>
                 </a>
-                <a href="../connexion/connexion.php" class="btn btn-outline-success btn-sm px-3">Connexion</a>
-                <a href="../inscription/inscription.php" class="btn btn-gold btn-sm px-3">S'inscrire</a>
+                <?php if(isset($_SESSION['user_id'])): ?>
+                    <a href="../profil/profil.php" class="text-success fw-semibold text-decoration-none"><i class="bi bi-person-circle me-1"></i>Bonjour, <?php echo $_SESSION['user_prenom']; ?> !</a>
+                    <a href="../deconnexion/deconnexion.php" class="btn btn-outline-danger btn-sm px-3">Déconnexion</a>
+                <?php else: ?>
+                    <a href="../connexion/connexion.php" class="btn btn-outline-success btn-sm px-3">Connexion</a>
+                    <a href="../inscription/inscription.php" class="btn btn-gold btn-sm px-3">S'inscrire</a>
+                <?php endif; ?>
             </div>
         </div>
     </div>
@@ -204,17 +220,17 @@ $categories = $stmt_categories->fetchAll(PDO::FETCH_ASSOC);
             <div class="col-lg-2 col-md-4">
                 <h6 class="footer-title mb-3">Liens rapides</h6>
                 <ul class="footer-links">
-                    <li><a href="../acceulle/acceulle.html">Accueil</a></li>
-                    <li><a href="#">Catalogue</a></li>
-                    <li><a href="#">À propos</a></li>
-                    <li><a href="#">Contact</a></li>
+                    <li><a href="../acceulle/acceulle.php">Accueil</a></li>
+                    <li><a href="catalogue.php">Catalogue</a></li>
+                    <li><a href="../apropos/apropos.php">À propos</a></li>
+                    <li><a href="../contact/contact.php">Contact</a></li>
                 </ul>
             </div>
             <div class="col-lg-2 col-md-4">
                 <h6 class="footer-title mb-3">Catégories</h6>
                 <ul class="footer-links">
                     <?php foreach($categories as $cat): ?>
-                    <li><a href="#"><?php echo $cat['nom']; ?></a></li>
+                    <li><a href="../catalogue/catalogue.php?categorie=<?php echo $cat['id_categorie']; ?>"><?php echo $cat['nom']; ?></a></li>
                     <?php endforeach; ?>
                 </ul>
             </div>

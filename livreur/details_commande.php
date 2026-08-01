@@ -42,7 +42,7 @@ $query_produits = "SELECT
                     p.image, 
                     lc.quantite, 
                     lc.prix_unitaire 
-                   FROM lignes_commande lc
+                   FROM commande_produits lc
                    JOIN produits p ON lc.id_produit = p.id_produit
                    WHERE lc.id_commande = ?";
 $stmt_prod = $pdo->prepare($query_produits);
@@ -76,7 +76,7 @@ $whatsappNumber = preg_replace('/^0/', '212', preg_replace('/[^0-9]/', '', $comm
                 <i class="bi bi-truck"></i> Mes Livraisons
             </a>
             <div class="menu-label">Session</div>
-            <a href="../logout.php" class="sidebar-link text-danger">
+            <a href="../acceulle/acceulle.php" class="sidebar-link text-danger">
                 <i class="bi bi-box-arrow-right"></i> Déconnexion
             </a>
         </div>

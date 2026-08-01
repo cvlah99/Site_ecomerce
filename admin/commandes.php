@@ -173,29 +173,34 @@ function formatOrderDate($dateString) {
                                         $formattedDate = formatOrderDate($cmd['date_commande']);
                                         
                                         // Status badge logic
-                                        switch($cmd['statut']) {
-                                            case 'en_attente':
-                                                $badge = 'bg-warning bg-opacity-10 text-warning';
-                                                $icon = 'bi-clock';
-                                                $texte = 'En attente';
-                                                break;
-                                            case 'en_cours':
-                                                $badge = 'bg-info bg-opacity-10 text-info';
-                                                $icon = 'bi-box-seam';
-                                                $texte = 'En cours';
-                                                break;
-                                            case 'livre':
-                                                $badge = 'bg-success bg-opacity-10 text-success';
-                                                $icon = 'bi-check2-all';
-                                                $texte = 'Livré';
-                                                break;
-                                            case 'annule':
-                                            default:
-                                                $badge = 'bg-danger bg-opacity-10 text-danger';
-                                                $icon = 'bi-x-circle';
-                                                $texte = 'Annulé';
-                                                break;
-                                        }
+                                switch($cmd['statut']) {
+                                    case 'en attente':
+                                    case 'en_attente':
+                                        $badge = 'bg-warning bg-opacity-10 text-warning';
+                                        $icon = 'bi-clock';
+                                        $texte = 'En attente';
+                                        break;
+                                    case 'en_cours':
+                                        $badge = 'bg-info bg-opacity-10 text-info';
+                                        $icon = 'bi-box-seam';
+                                        $texte = 'En cours';
+                                        break;
+                                    case 'livre':
+                                        $badge = 'bg-success bg-opacity-10 text-success';
+                                        $icon = 'bi-check2-all';
+                                        $texte = 'Livré';
+                                        break;
+                                    case 'annule':
+                                        $badge = 'bg-danger bg-opacity-10 text-danger';
+                                        $icon = 'bi-x-circle';
+                                        $texte = 'Annulé';
+                                        break;
+                                    default:
+                                        $badge = 'bg-secondary bg-opacity-10 text-secondary';
+                                        $icon = 'bi-question-circle';
+                                        $texte = $cmd['statut'];
+                                        break;
+                                }
                                     ?>
                                 <tr>
                                     <td><span class="fw-bold text-dark">#CMD-<?php echo str_pad($cmd['id_commande'], 4, '0', STR_PAD_LEFT); ?></span></td>

@@ -63,7 +63,7 @@ $commandes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 <i class="bi bi-truck"></i> Mes Livraisons
             </a>
             <div class="menu-label">Session</div>
-            <a href="../logout.php" class="sidebar-link text-danger">
+            <a href="../acceulle/acceulle.php" class="sidebar-link text-danger">
                 <i class="bi bi-box-arrow-right"></i> Déconnexion
             </a>
         </div>

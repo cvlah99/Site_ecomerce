@@ -113,14 +113,16 @@ $id_utilisateur = $pdo->lastInsertId();
 
 $stmt = $pdo->prepare("INSERT INTO clients (id_utilisateur) VALUES (:id_utilisateur)");
 $stmt->execute([':id_utilisateur' => $id_utilisateur]);
+$id_client = $pdo->lastInsertId();
 $_SESSION['user_id'] = $id_utilisateur;
+$_SESSION['id_client'] = $id_client;
 $_SESSION['user_nom'] = $nom;
 $_SESSION['user_prenom'] = $prenom;
 $_SESSION['user_email'] = $email;
 $_SESSION['user_role'] = 'client';
 
 $_SESSION['succes'] = "Votre compte a été créé avec succès !";
-header("location:inscription.php");
+header("location:../acceulle/acceulle.php");
 exit();
 }
 else{
