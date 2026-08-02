@@ -9,6 +9,8 @@ $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 $erreur = '';
 
+
+
 // Handle the form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $nom = $_POST['nom'] ?? '';

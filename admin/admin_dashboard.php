@@ -9,6 +9,7 @@ $stmt_prod = $pdo->query("SELECT COUNT(*) FROM produits");
 $total_produits = $stmt_prod->fetchColumn();
 
 // 2. Get Total Categories
+
 $stmt_cat = $pdo->query("SELECT COUNT(*) FROM categories");
 $total_categories = $stmt_cat->fetchColumn();
 
