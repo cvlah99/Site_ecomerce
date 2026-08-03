@@ -32,7 +32,7 @@ $alertes_stock = $stmt_stock->fetchColumn();
 
     <aside class="admin-sidebar">
         <div class="sidebar-header">
-            <a href="admin_dashboard.php" class="text-decoration-none">
+            <a href="../acceulle/acceulle.php" class="text-decoration-none">
                 <span class="logo-text">Soin<span class="logo-vital">Vital</span></span>
             </a>
         </div>
@@ -71,6 +71,9 @@ $alertes_stock = $stmt_stock->fetchColumn();
             </a>
             <a href="avis_clients.php" class="sidebar-link">
                 <i class="bi bi-star"></i> Avis Clients
+            </a>
+            <a href="admin_messages.php" class="btn btn-outline-success">
+                <i class="bi bi-envelope"></i> Gérer les messages
             </a>
         </div>
     </aside>

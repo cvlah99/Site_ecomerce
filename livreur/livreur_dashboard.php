@@ -53,7 +53,7 @@ $commandes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 <body>
     <aside class="admin-sidebar">
         <div class="sidebar-header">
-            <a href="livreur_dashboard.php" class="text-decoration-none">
+            <a href="../acceulle/acceulle.php" class="text-decoration-none">
                 <span class="logo-text">Soin<span class="logo-vital">Vital</span></span>
             </a>
         </div>

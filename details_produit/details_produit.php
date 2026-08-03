@@ -9,9 +9,15 @@ if(!isset($_GET['id']) || !is_numeric($_GET['id'])){
 
 $id_produit = intval($_GET['id']);
 
-$stmt = $pdo->prepare("SELECT p.*, c.nom as nom_categorie 
+$stmt = $pdo->prepare("SELECT p.*, c.nom as nom_categorie, 
+                              pr.pourcentage_remise, pr.statut as promo_statut,
+                              (p.prix - (p.prix * (pr.pourcentage_remise / 100))) AS prix_remise
                         FROM produits p 
                         JOIN categories c ON p.id_categorie = c.id_categorie 
+                        LEFT JOIN promotions pr ON p.id_produit = pr.id_produit 
+                              AND pr.statut = 'actif' 
+                              AND CURRENT_DATE >= pr.date_debut 
+                              AND CURRENT_DATE <= pr.date_fin
                         WHERE p.id_produit = :id");
 $stmt->execute([':id' => $id_produit]);
 $produit = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -29,7 +35,7 @@ $stmt_avis = $pdo->prepare("SELECT a.*, u.nom, u.prenom
                              FROM avis a 
                              JOIN clients c ON a.id_client = c.id_client
                              JOIN utilisateurs u ON c.id_utilisateur = u.id_utilisateur
-                             WHERE a.id_produit = :id
+                             WHERE a.id_produit = :id AND a.statut = 'publie'
                              ORDER BY a.date_avis DESC");
 $stmt_avis->execute([':id' => $id_produit]);
 $avis = $stmt_avis->fetchAll(PDO::FETCH_ASSOC);
@@ -100,11 +106,31 @@ if(isset($_SESSION['id_client'])){
                 </a>
                 <a href="../panier/panier.php" class="nav-icon position-relative">
                     <i class="bi bi-bag fs-5"></i>
-                    <span class="badge-cart"><?php echo $nb_panier; ?></span>
+                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark" style="font-size: 0.65rem;">
+                        <?php echo $nb_panier; ?>
+                    </span>
                 </a>
+                
                 <?php if(isset($_SESSION['user_id'])): ?>
-                    <a href="../profil/profil.php" class="text-success fw-semibold text-decoration-none"><i class="bi bi-person-circle me-1"></i>Bonjour, <?php echo $_SESSION['user_prenom']; ?> !</a>
+                    
+                    <!-- Dashboard pour Admin -->
+                    <?php if(isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin'): ?>
+                        <a href="../admin/admin_dashboard.php" class="btn btn-dark btn-sm px-3 shadow-sm border-0">
+                            <i class="bi bi-speedometer2 me-1"></i> Dashboard
+                        </a>
+                    <!-- Dashboard pour Livreur -->
+                    <?php elseif(isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'livreur'): ?>
+                        <a href="../livreur/livreur_dashboard.php" class="btn btn-dark btn-sm px-3 shadow-sm border-0">
+                            <i class="bi bi-speedometer2 me-1"></i> Dashboard
+                        </a>
+                    <?php endif; ?>
+
+                    <!-- Affichage standard du profil pour tous les connectés -->
+                    <a href="../profil/profil.php" class="text-success fw-semibold text-decoration-none">
+                        <i class="bi bi-person-circle me-1"></i>Bonjour, <?php echo $_SESSION['user_prenom']; ?> !
+                    </a>
                     <a href="../deconnexion/deconnexion.php" class="btn btn-outline-danger btn-sm px-3">Déconnexion</a>
+                
                 <?php else: ?>
                     <a href="../connexion/connexion.php" class="btn btn-outline-success btn-sm px-3">Connexion</a>
                     <a href="../inscription/inscription.php" class="btn btn-gold btn-sm px-3">S'inscrire</a>
@@ -152,7 +178,17 @@ if(isset($_SESSION['id_client'])){
                     <span class="text-muted small">(<?php echo count($avis); ?> avis)</span>
                 </div>
 
-                <div class="produit-prix mb-4"><?php echo $produit['prix']; ?> MAD</div>
+                <div class="produit-prix mb-4">
+                    <?php if (!empty($produit['pourcentage_remise'])): ?>
+                        <span class="text-muted text-decoration-line-through fs-5 me-2"><?php echo number_format($produit['prix'], 2); ?> MAD</span>
+                        <span class="text-success fw-bold"><?php echo number_format($produit['prix_remise'], 2); ?> MAD</span>
+                        <span class="badge bg-danger ms-2 align-middle fs-6" style="vertical-align: text-bottom;">
+                            -<?php echo floatval($produit['pourcentage_remise']); ?>%
+                        </span>
+                    <?php else: ?>
+                        <?php echo number_format($produit['prix'], 2); ?> MAD
+                    <?php endif; ?>
+                </div>
 
                 <div class="produit-description mb-4">
                     <p><?php echo $produit['description']; ?></p>
@@ -229,11 +265,56 @@ if(isset($_SESSION['id_client'])){
             <div class="text-center py-4" data-aos="fade-up">
                 <i class="bi bi-chat-dots fs-1 text-muted"></i>
                 <p class="text-muted mt-2">Aucun avis pour ce produit</p>
-                <a href="../connexion/connexion.php" class="btn btn-gold">Laisser un avis</a>
+                
+                <?php if(!isset($_SESSION['user_id'])): ?>
+                    <a href="../connexion/connexion.php" class="btn btn-gold">Connectez-vous pour laisser un avis</a>
+                <?php elseif(isset($_SESSION['id_client'])): ?>
+                    <button type="button" class="btn btn-gold" data-bs-toggle="modal" data-bs-target="#modalAvis">Laisser un avis</button>
+                <?php else: ?>
+                    <p class="text-danger small mt-2">Seuls les clients peuvent laisser un avis.</p>
+                <?php endif; ?>
+                
             </div>
         <?php endif; ?>
     </div>
 </section>
+
+<!-- Modal pour Ajouter un Avis -->
+<div class="modal fade" id="modalAvis" tabindex="-1" aria-labelledby="modalAvisLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title fw-bold" id="modalAvisLabel" style="font-family: 'Playfair Display', serif;">Laisser un avis</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="ajouter_avis.php" method="POST">
+                <div class="modal-body p-4">
+                    <input type="hidden" name="id_produit" value="<?php echo $produit['id_produit']; ?>">
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Votre Note</label>
+                        <select name="note" class="form-select" required>
+                            <option value="5">⭐⭐⭐⭐⭐ (5/5) - Excellent</option>
+                            <option value="4">⭐⭐⭐⭐ (4/5) - Très bien</option>
+                            <option value="3">⭐⭐⭐ (3/5) - Bien</option>
+                            <option value="2">⭐⭐ (2/5) - Passable</option>
+                            <option value="1">⭐ (1/5) - Mauvais</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Votre Commentaire</label>
+                        <textarea name="commentaire" class="form-control" rows="4" placeholder="Partagez votre expérience avec ce produit..." required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-gold">Envoyer mon avis</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
 <footer class="footer-section pt-5 pb-3">
     <div class="container">

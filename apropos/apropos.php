@@ -62,9 +62,36 @@ if(isset($_SESSION['id_client'])){
                 </li>
             </ul>
             <div class="d-flex align-items-center gap-3">
+                <a href="#" class="nav-icon position-relative">
+                    <i class="bi bi-search fs-5"></i>
+                </a>
+                <a href="../panier/panier.php" class="nav-icon position-relative">
+                    <i class="bi bi-bag fs-5"></i>
+                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark" style="font-size: 0.65rem;">
+                        <?php echo $nb_panier; ?>
+                    </span>
+                </a>
+                
                 <?php if(isset($_SESSION['user_id'])): ?>
-                    <a href="../profil/profil.php" class="text-success fw-semibold text-decoration-none"><i class="bi bi-person-circle me-1"></i>Bonjour, <?php echo $_SESSION['user_prenom']; ?> !</a>
+                    
+                    <!-- Dashboard pour Admin -->
+                    <?php if(isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin'): ?>
+                        <a href="../admin/admin_dashboard.php" class="btn btn-dark btn-sm px-3 shadow-sm border-0">
+                            <i class="bi bi-speedometer2 me-1"></i> Dashboard
+                        </a>
+                    <!-- Dashboard pour Livreur -->
+                    <?php elseif(isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'livreur'): ?>
+                        <a href="../livreur/livreur_dashboard.php" class="btn btn-dark btn-sm px-3 shadow-sm border-0">
+                            <i class="bi bi-speedometer2 me-1"></i> Dashboard
+                        </a>
+                    <?php endif; ?>
+
+                    <!-- Affichage standard du profil pour tous les connectés -->
+                    <a href="../profil/profil.php" class="text-success fw-semibold text-decoration-none">
+                        <i class="bi bi-person-circle me-1"></i>Bonjour, <?php echo $_SESSION['user_prenom']; ?> !
+                    </a>
                     <a href="../deconnexion/deconnexion.php" class="btn btn-outline-danger btn-sm px-3">Déconnexion</a>
+                
                 <?php else: ?>
                     <a href="../connexion/connexion.php" class="btn btn-outline-success btn-sm px-3">Connexion</a>
                     <a href="../inscription/inscription.php" class="btn btn-gold btn-sm px-3">S'inscrire</a>

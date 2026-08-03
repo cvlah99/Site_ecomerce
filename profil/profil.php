@@ -8,6 +8,25 @@ if(!isset($_SESSION['user_id'])){
 }
 
 $id_utilisateur = $_SESSION['user_id'];
+
+// Vérifier si l'utilisateur est un client
+if (!isset($_SESSION['id_client'])) {
+    $stmt_check = $pdo->prepare("SELECT id_client FROM clients WHERE id_utilisateur = ?");
+    $stmt_check->execute([$id_utilisateur]);
+    $is_client = $stmt_check->fetch(PDO::FETCH_ASSOC);
+    
+    if ($is_client) {
+        $_SESSION['id_client'] = $is_client['id_client'];
+    } else {
+        // Rediriger les admins et livreurs
+        echo "<script>
+                alert('Accès refusé : Cet espace est réservé aux clients.'); 
+                window.location.href='../catalogue/catalogue.php';
+              </script>";
+        exit();
+    }
+}
+
 $id_client = $_SESSION['id_client'];
 
 $stmt_cat = $pdo->prepare("SELECT * FROM categories ORDER BY ordre_affichage ASC");

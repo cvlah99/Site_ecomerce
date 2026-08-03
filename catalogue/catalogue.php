@@ -2,18 +2,38 @@
 session_start();
 $nb_panier = 0;
 require_once '../config/connexion_db.php';
+
+// Fetch real cart count for the logged-in client
+if(isset($_SESSION['id_client'])){
+    $stmt_nb = $pdo->prepare("SELECT SUM(pp.quantite_produit) as total FROM panier_produits pp JOIN paniers pa ON pp.id_panier = pa.id_panier WHERE pa.id_client = :id_client");
+    $stmt_nb->execute([':id_client' => $_SESSION['id_client']]);
+    $result = $stmt_nb->fetch(PDO::FETCH_ASSOC);
+    $nb_panier = $result['total'] ?? 0;
+}
 if(isset($_GET['categorie']) && is_numeric($_GET['categorie'])){
     $id_cat = intval($_GET['categorie']);
-    $stmt = $pdo->prepare("SELECT p.*, c.nom as nom_categorie 
+    $stmt = $pdo->prepare("SELECT p.*, c.nom as nom_categorie, 
+                                 pr.pourcentage_remise, 
+                                 (p.prix - (p.prix * (pr.pourcentage_remise / 100))) AS prix_remise
                             FROM produits p 
                             JOIN categories c ON p.id_categorie = c.id_categorie 
+                            LEFT JOIN promotions pr ON p.id_produit = pr.id_produit 
+                                  AND pr.statut = 'actif' 
+                                  AND CURRENT_DATE >= pr.date_debut 
+                                  AND CURRENT_DATE <= pr.date_fin
                             WHERE p.id_categorie = :id
                             ORDER BY p.date_ajout DESC");
     $stmt->execute([':id' => $id_cat]);
 } else {
-    $stmt = $pdo->prepare("SELECT p.*, c.nom as nom_categorie 
+    $stmt = $pdo->prepare("SELECT p.*, c.nom as nom_categorie, 
+                                 pr.pourcentage_remise, 
+                                 (p.prix - (p.prix * (pr.pourcentage_remise / 100))) AS prix_remise
                             FROM produits p 
                             JOIN categories c ON p.id_categorie = c.id_categorie 
+                            LEFT JOIN promotions pr ON p.id_produit = pr.id_produit 
+                                  AND pr.statut = 'actif' 
+                                  AND CURRENT_DATE >= pr.date_debut 
+                                  AND CURRENT_DATE <= pr.date_fin
                             ORDER BY p.date_ajout DESC");
     $stmt->execute();
 }
@@ -75,9 +95,24 @@ $categories = $stmt_categories->fetchAll(PDO::FETCH_ASSOC);
                     <i class="bi bi-bag fs-5"></i>
                     <span class="badge-cart"><?php echo $nb_panier; ?></span>
                 </a>
+                
                 <?php if(isset($_SESSION['user_id'])): ?>
-                    <a href="../profil/profil.php" class="text-success fw-semibold text-decoration-none"><i class="bi bi-person-circle me-1"></i>Bonjour, <?php echo $_SESSION['user_prenom']; ?> !</a>
+                    
+                    <?php if(isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin'): ?>
+                        <a href="../admin/admin_dashboard.php" class="btn btn-dark btn-sm px-3 shadow-sm border-0">
+                            <i class="bi bi-speedometer2 me-1"></i> Dashboard
+                        </a>
+                    <?php elseif(isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'livreur'): ?>
+                        <a href="../livreur/livreur_dashboard.php" class="btn btn-dark btn-sm px-3 shadow-sm border-0">
+                            <i class="bi bi-speedometer2 me-1"></i> Dashboard
+                        </a>
+                    <?php endif; ?>
+
+                    <a href="../profil/profil.php" class="text-success fw-semibold text-decoration-none">
+                        <i class="bi bi-person-circle me-1"></i>Bonjour, <?php echo $_SESSION['user_prenom']; ?> !
+                    </a>
                     <a href="../deconnexion/deconnexion.php" class="btn btn-outline-danger btn-sm px-3">Déconnexion</a>
+                
                 <?php else: ?>
                     <a href="../connexion/connexion.php" class="btn btn-outline-success btn-sm px-3">Connexion</a>
                     <a href="../inscription/inscription.php" class="btn btn-gold btn-sm px-3">S'inscrire</a>
@@ -86,6 +121,18 @@ $categories = $stmt_categories->fetchAll(PDO::FETCH_ASSOC);
         </div>
     </div>
 </nav>
+
+<!-- BANNIÈRE PROMO LIVRAISON -->
+<div class="alert alert-dismissible fade show text-center mb-0 rounded-0 border-0 shadow-sm" role="alert" style="background-color: #f8f9fa; border-bottom: 2px solid var(--or) !important; padding: 12px 0; z-index: 1020; position: relative; margin-top: 75px;">
+    <div class="container d-flex justify-content-center align-items-center">
+        <i class="bi bi-truck fs-5 me-2" style="color: #2C4A3B;"></i>
+        <span class="fw-semibold text-dark" style="font-size: 0.95rem;">
+            Offre Spéciale : <span style="color: #2C4A3B;">Livraison Gratuite</span> pour toute commande supérieure à 300 MAD ! 🇲🇦
+        </span>
+    </div>
+    <button type="button" class="btn-close shadow-none" data-bs-dismiss="alert" aria-label="Close" style="padding: 14px;"></button>
+</div>
+<!-- FIN BANNIÈRE PROMO -->
 
 <section class="catalogue-banner">
     <div class="container">
@@ -163,11 +210,16 @@ $categories = $stmt_categories->fetchAll(PDO::FETCH_ASSOC);
                     <?php foreach($produits as $produit): ?>
                     <div class="col-md-6 col-lg-4 produit-item" 
                          data-categorie="<?php echo $produit['nom_categorie']; ?>"
-                         data-prix="<?php echo $produit['prix']; ?>"
+                         data-prix="<?php echo !empty($produit['pourcentage_remise']) ? $produit['prix_remise'] : $produit['prix']; ?>"
                          data-nom="<?php echo strtolower($produit['nom']); ?>"
                          data-aos="fade-up">
                         <div class="product-card">
-                            <div class="product-img-wrapper">
+                            <div class="product-img-wrapper position-relative">
+                                <?php if (!empty($produit['pourcentage_remise'])): ?>
+                                    <span class="badge bg-danger position-absolute top-0 start-0 m-2 shadow-sm" style="z-index: 2;">
+                                        -<?php echo floatval($produit['pourcentage_remise']); ?>%
+                                    </span>
+                                <?php endif; ?>
                                 <img src="<?php echo $produit['image']; ?>" 
                                      alt="<?php echo $produit['nom']; ?>" 
                                      class="product-img">
@@ -181,7 +233,14 @@ $categories = $stmt_categories->fetchAll(PDO::FETCH_ASSOC);
                                 <h6 class="product-name mt-1"><?php echo $produit['nom']; ?></h6>
                                 <p class="product-marque text-muted small mb-1"><?php echo $produit['marque']; ?></p>
                                 <div class="d-flex align-items-center justify-content-between mt-2">
-                                    <span class="product-price"><?php echo $produit['prix']; ?> MAD</span>
+                                    <div class="product-price d-flex flex-column">
+                                        <?php if (!empty($produit['pourcentage_remise'])): ?>
+                                            <span class="text-muted text-decoration-line-through small" style="font-size: 0.75rem;"><?php echo number_format($produit['prix'], 2); ?> MAD</span>
+                                            <span class="text-success fw-bold"><?php echo number_format($produit['prix_remise'], 2); ?> MAD</span>
+                                        <?php else: ?>
+                                            <span class="fw-bold text-dark"><?php echo number_format($produit['prix'], 2); ?> MAD</span>
+                                        <?php endif; ?>
+                                    </div>
                                     <div class="product-stars">
                                         <i class="bi bi-star-fill text-warning"></i>
                                         <i class="bi bi-star-fill text-warning"></i>

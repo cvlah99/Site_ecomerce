@@ -66,7 +66,7 @@ $whatsappNumber = preg_replace('/^0/', '212', preg_replace('/[^0-9]/', '', $comm
 <body>
     <aside class="admin-sidebar">
         <div class="sidebar-header">
-            <a href="livreur_dashboard.php" class="text-decoration-none">
+            <a href="../acceulle/acceulle.php" class="text-decoration-none">
                 <span class="logo-text">Soin<span class="logo-vital">Vital</span></span>
             </a>
         </div>

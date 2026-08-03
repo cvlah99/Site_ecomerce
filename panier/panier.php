@@ -7,6 +7,24 @@ if(!isset($_SESSION['user_id'])){
     exit();
 }
 
+// Fetch the id_client and block non-clients (admins/livreurs)
+if (!isset($_SESSION['id_client'])) {
+    $stmt_cli = $pdo->prepare("SELECT id_client FROM clients WHERE id_utilisateur = ?");
+    $stmt_cli->execute([$_SESSION['user_id']]);
+    $client = $stmt_cli->fetch(PDO::FETCH_ASSOC);
+    
+    if ($client) {
+        $_SESSION['id_client'] = $client['id_client'];
+    } else {
+        // If no client profile is found, block access and redirect
+        echo "<script>
+                alert('Accès refusé : Votre compte ne permet pas de consulter le panier.'); 
+                window.location.href='../catalogue/catalogue.php';
+              </script>";
+        exit();
+    }
+}
+
 $id_client = $_SESSION['id_client'];
 
 $stmt_cat = $pdo->prepare("SELECT * FROM categories ORDER BY ordre_affichage ASC");
@@ -25,17 +43,24 @@ if(!$panier){
     $id_panier = $panier['id_panier'];
 }
 
-$stmt_produits = $pdo->prepare("SELECT pp.quantite_produit, p.id_produit, p.nom, p.prix, p.image, c.nom as nom_categorie
+$stmt_produits = $pdo->prepare("SELECT pp.quantite_produit, p.id_produit, p.nom, p.prix, p.image, c.nom as nom_categorie,
+                                        pr.pourcentage_remise, 
+                                        (p.prix - (p.prix * (pr.pourcentage_remise / 100))) AS prix_remise
                                 FROM panier_produits pp
                                 JOIN produits p ON pp.id_produit = p.id_produit
                                 JOIN categories c ON p.id_categorie = c.id_categorie
+                                LEFT JOIN promotions pr ON p.id_produit = pr.id_produit 
+                                        AND pr.statut = 'actif' 
+                                        AND CURRENT_DATE >= pr.date_debut 
+                                        AND CURRENT_DATE <= pr.date_fin
                                 WHERE pp.id_panier = :id_panier");
 $stmt_produits->execute([':id_panier' => $id_panier]);
 $produits_panier = $stmt_produits->fetchAll(PDO::FETCH_ASSOC);
 
 $total = 0;
 foreach($produits_panier as $item){
-    $total += $item['prix'] * $item['quantite_produit'];
+    $prix_a_payer = !empty($item['pourcentage_remise']) ? $item['prix_remise'] : $item['prix'];
+    $total += $prix_a_payer * $item['quantite_produit'];
 }
 
 if(isset($_SESSION['succes'])){
@@ -99,7 +124,13 @@ if(isset($_SESSION['erreur'])){
             <div class="d-flex align-items-center gap-3">
                 <a href="panier.php" class="nav-icon position-relative">
                     <i class="bi bi-bag fs-5"></i>
-                    <span class="badge-cart"><?php echo count($produits_panier); ?></span>
+                    <?php 
+$total_quantite = 0;
+foreach($produits_panier as $item) {
+    $total_quantite += $item['quantite_produit'];
+}
+?>
+<span class="badge-cart"><?php echo $total_quantite; ?></span>
                 </a>
                 <span class="text-success fw-semibold">Bonjour, <?php echo $_SESSION['user_prenom']; ?> !</span>
                 <a href="../deconnexion/deconnexion.php" class="btn btn-outline-danger btn-sm px-3">Déconnexion</a>
@@ -111,7 +142,7 @@ if(isset($_SESSION['erreur'])){
 <section class="panier-banner">
     <div class="container text-center">
         <h1 class="banner-title" data-aos="fade-up">Mon Panier</h1>
-        <p class="banner-subtitle" data-aos="fade-up" data-aos-delay="100"><?php echo count($produits_panier); ?> article(s) dans votre panier</p>
+        <p class="banner-subtitle" data-aos="fade-up" data-aos-delay="100"><?php echo $total_quantite; ?> article(s) dans votre panier</p>
     </div>
 </section>
 
@@ -139,10 +170,21 @@ if(isset($_SESSION['erreur'])){
                     <div class="panier-item d-flex align-items-center gap-3 mb-4">
                         <img src="<?php echo $item['image']; ?>" alt="<?php echo $item['nom']; ?>" class="panier-img">
                         <div class="flex-grow-1">
-                            <span class="panier-categorie"><?php echo $item['nom_categorie']; ?></span>
-                            <h6 class="panier-nom mt-1"><?php echo $item['nom']; ?></h6>
-                            <span class="panier-prix"><?php echo $item['prix']; ?> MAD</span>
-                        </div>
+    <span class="panier-categorie"><?php echo $item['nom_categorie']; ?></span>
+    <h6 class="panier-nom mt-1"><?php echo $item['nom']; ?></h6>
+    
+    <?php $prix_unitaire = !empty($item['pourcentage_remise']) ? $item['prix_remise'] : $item['prix']; ?>
+    
+    <?php if (!empty($item['pourcentage_remise'])): ?>
+        <div class="panier-prix">
+            <span class="text-muted text-decoration-line-through small me-1"><?php echo number_format($item['prix'], 2); ?></span>
+            <span class="text-success fw-bold"><?php echo number_format($item['prix_remise'], 2); ?> MAD</span>
+            <span class="badge bg-danger ms-1" style="font-size: 0.7rem;">-<?php echo floatval($item['pourcentage_remise']); ?>%</span>
+        </div>
+    <?php else: ?>
+        <div class="panier-prix fw-bold"><?php echo number_format($item['prix'], 2); ?> MAD</div>
+    <?php endif; ?>
+</div>
                         <div class="d-flex align-items-center gap-2">
                             <form action="panier_traitement.php" method="POST">
                                 <input type="hidden" name="action" value="diminuer">
@@ -158,7 +200,7 @@ if(isset($_SESSION['erreur'])){
                                 <button type="submit" class="btn-quantite">+</button>
                             </form>
                         </div>
-                        <span class="panier-sous-total"><?php echo $item['prix'] * $item['quantite_produit']; ?> MAD</span>
+                        <span class="panier-sous-total fw-bold"><?php echo number_format($prix_unitaire * $item['quantite_produit'], 2); ?> MAD</span>
                         <form action="panier_traitement.php" method="POST">
                             <input type="hidden" name="action" value="supprimer">
                             <input type="hidden" name="id_produit" value="<?php echo $item['id_produit']; ?>">

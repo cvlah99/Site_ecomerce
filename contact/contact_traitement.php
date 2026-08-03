@@ -2,51 +2,49 @@
 session_start();
 require_once '../config/connexion_db.php';
 
-if(isset($_POST["nom"], $_POST["email"], $_POST["sujet"], $_POST["message"])){
-    $nom = trim(htmlspecialchars($_POST["nom"]));
-    $email = trim(htmlspecialchars($_POST["email"]));
-    $sujet = trim(htmlspecialchars($_POST["sujet"]));
-    $message = trim(htmlspecialchars($_POST["message"]));
+// Check if the form was actually submitted via POST
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    
+    // 1. Capture and clean the inputs
+    $nom = trim($_POST['nom'] ?? '');
+    $email = trim($_POST['email'] ?? '');
+    $sujet = trim($_POST['sujet'] ?? '');
+    $message = trim($_POST['message'] ?? '');
 
-    if(empty($nom) || strlen($nom) < 3 || strlen($nom) > 30){
-        $_SESSION['erreur'] = "Le nom est invalide !";
-        header("location:contact.php");
+    // 2. Validate that fields aren't empty (as a backend backup to your JS)
+    if (empty($nom) || empty($email) || empty($sujet) || empty($message)) {
+        $_SESSION['erreur'] = "Veuillez remplir tous les champs obligatoires.";
+        header("Location: contact.php");
         exit();
     }
 
-    if(empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)){
-        $_SESSION['erreur'] = "L'adresse email n'est pas valide !";
-        header("location:contact.php");
+    // 3. Validate email format
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $_SESSION['erreur'] = "Le format de l'adresse email est invalide.";
+        header("Location: contact.php");
         exit();
     }
 
-    if(empty($sujet) || strlen($sujet) < 5 || strlen($sujet) > 200){
-        $_SESSION['erreur'] = "Le sujet est invalide !";
-        header("location:contact.php");
+    try {
+        // 4. Insert the message into the database
+        $stmt = $pdo->prepare("INSERT INTO messages_contact (nom, email, sujet, message, statut) VALUES (?, ?, ?, ?, 'nouveau')");
+        $stmt->execute([$nom, $email, $sujet, $message]);
+
+        // 5. Send a success message back to the user
+        $_SESSION['succes'] = "Votre message a été envoyé avec succès. Notre équipe vous répondra dans les plus brefs délais !";
+        header("Location: contact.php");
+        exit();
+
+    } catch (PDOException $e) {
+        // If there is a database error, catch it so it doesn't crash the page
+        $_SESSION['erreur'] = "Une erreur s'est produite lors de l'envoi de votre message. Veuillez réessayer plus tard.";
+        header("Location: contact.php");
         exit();
     }
-
-    if(empty($message) || strlen($message) < 20){
-        $_SESSION['erreur'] = "Le message doit contenir au moins 20 caractères !";
-        header("location:contact.php");
-        exit();
-    }
-
-    $stmt = $pdo->prepare("INSERT INTO messages_contact (nom, email, sujet, message) 
-                            VALUES (:nom, :email, :sujet, :message)");
-    $stmt->execute([
-        ':nom' => $nom,
-        ':email' => $email,
-        ':sujet' => $sujet,
-        ':message' => $message
-    ]);
-
-    $_SESSION['succes'] = "Votre message a été envoyé avec succès ! Nous vous répondrons dans les plus brefs délais.";
-    header("location:contact.php");
-    exit();
 
 } else {
-    header("location:contact.php");
+    // If someone tries to access this file directly without submitting the form, kick them back
+    header("Location: contact.php");
     exit();
 }
 ?>

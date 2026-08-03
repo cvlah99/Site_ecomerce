@@ -13,9 +13,16 @@ if(isset($_SESSION['id_client'])){
     $nb_panier = $result['total'] ?? 0;
 }
 
-$stmt_produits = $pdo->prepare("SELECT p.*, c.nom as nom_categorie FROM produits p 
-                        JOIN categories c ON p.id_categorie = c.id_categorie 
-                        ORDER BY p.id_produit ASC LIMIT 4");
+$stmt_produits = $pdo->prepare("SELECT p.*, c.nom as nom_categorie,
+                                      pr.pourcentage_remise, 
+                                      (p.prix - (p.prix * (pr.pourcentage_remise / 100))) AS prix_remise
+                                FROM produits p 
+                                JOIN categories c ON p.id_categorie = c.id_categorie 
+                                LEFT JOIN promotions pr ON p.id_produit = pr.id_produit 
+                                      AND pr.statut = 'actif' 
+                                      AND CURRENT_DATE >= pr.date_debut 
+                                      AND CURRENT_DATE <= pr.date_fin
+                                ORDER BY p.id_produit ASC LIMIT 4");
 $stmt_produits->execute();
 $produits_vedettes = $stmt_produits->fetchAll(PDO::FETCH_ASSOC);
 ?>
@@ -74,18 +81,34 @@ $produits_vedettes = $stmt_produits->fetchAll(PDO::FETCH_ASSOC);
                 <a href="#" class="nav-icon position-relative">
                     <i class="bi bi-search fs-5"></i>
                 </a>
-                <?php if(isset($_SESSION['user_id'])): ?>
                 <a href="../panier/panier.php" class="nav-icon position-relative">
                     <i class="bi bi-bag fs-5"></i>
                     <span class="badge-cart"><?php echo $nb_panier; ?></span>
                 </a>
-                <a href="../profil/profil.php" class="text-success fw-semibold text-decoration-none">
-                    <i class="bi bi-person-circle me-1"></i>Bonjour, <?php echo $_SESSION['user_prenom']; ?> !
-                </a>
-                <a href="../deconnexion/deconnexion.php" class="btn btn-outline-danger btn-sm px-3">Déconnexion</a>
+                
+                <?php if(isset($_SESSION['user_id'])): ?>
+                    
+                    <!-- Dashboard pour Admin -->
+                    <?php if(isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin'): ?>
+                        <a href="../admin/admin_dashboard.php" class="btn btn-dark btn-sm px-3 shadow-sm border-0">
+                            <i class="bi bi-speedometer2 me-1"></i> Dashboard
+                        </a>
+                    <!-- Dashboard pour Livreur -->
+                    <?php elseif(isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'livreur'): ?>
+                        <a href="../livreur/livreur_dashboard.php" class="btn btn-dark btn-sm px-3 shadow-sm border-0">
+                            <i class="bi bi-speedometer2 me-1"></i> Dashboard
+                        </a>
+                    <?php endif; ?>
+
+                    <!-- Affichage standard du profil pour tous les connectés -->
+                    <a href="../profil/profil.php" class="text-success fw-semibold text-decoration-none">
+                        <i class="bi bi-person-circle me-1"></i>Bonjour, <?php echo $_SESSION['user_prenom']; ?> !
+                    </a>
+                    <a href="../deconnexion/deconnexion.php" class="btn btn-outline-danger btn-sm px-3">Déconnexion</a>
+                
                 <?php else: ?>
-                <a href="../connexion/connexion.php" class="btn btn-outline-success btn-sm px-3">Connexion</a>
-                <a href="../inscription/inscription.php" class="btn btn-gold btn-sm px-3">S'inscrire</a>
+                    <a href="../connexion/connexion.php" class="btn btn-outline-success btn-sm px-3">Connexion</a>
+                    <a href="../inscription/inscription.php" class="btn btn-gold btn-sm px-3">S'inscrire</a>
                 <?php endif; ?>
             </div>
         </div>
@@ -210,9 +233,14 @@ $produits_vedettes = $stmt_produits->fetchAll(PDO::FETCH_ASSOC);
             <?php foreach($produits_vedettes as $index => $produit): ?>
             <div class="col-md-6 col-lg-3" data-aos="zoom-in" data-aos-delay="<?php echo ($index+1)*100; ?>">
                 <div class="product-card">
-                    <div class="product-img-wrapper">
-                        <img src="<?php echo $produit['image']; ?>"
-                             alt="<?php echo $produit['nom']; ?>" class="product-img">
+                    <div class="product-img-wrapper position-relative">
+    <?php if (!empty($produit['pourcentage_remise'])): ?>
+        <span class="badge bg-danger position-absolute top-0 start-0 m-2 shadow-sm" style="z-index: 2;">
+            -<?php echo floatval($produit['pourcentage_remise']); ?>%
+        </span>
+    <?php endif; ?>
+    <img src="<?php echo $produit['image']; ?>"
+         alt="<?php echo $produit['nom']; ?>" class="product-img">
                         <div class="product-overlay">
                             <a href="../details_produit/details_produit.php?id=<?php echo $produit['id_produit']; ?>" 
                                class="btn btn-gold btn-sm">Voir détails</a>
@@ -222,8 +250,15 @@ $produits_vedettes = $stmt_produits->fetchAll(PDO::FETCH_ASSOC);
                         <span class="product-category"><?php echo $produit['nom_categorie']; ?></span>
                         <h6 class="product-name mt-1"><?php echo $produit['nom']; ?></h6>
                         <div class="d-flex align-items-center justify-content-between mt-2">
-                            <span class="product-price"><?php echo $produit['prix']; ?> MAD</span>
-                            <div class="product-stars">
+    <div class="product-price d-flex flex-column">
+        <?php if (!empty($produit['pourcentage_remise'])): ?>
+            <span class="text-muted text-decoration-line-through small" style="font-size: 0.75rem;"><?php echo number_format($produit['prix'], 2); ?> MAD</span>
+            <span class="text-success fw-bold"><?php echo number_format($produit['prix_remise'], 2); ?> MAD</span>
+        <?php else: ?>
+            <span class="fw-bold text-dark"><?php echo number_format($produit['prix'], 2); ?> MAD</span>
+        <?php endif; ?>
+    </div>
+    <div class="product-stars align-self-end">
                                 <i class="bi bi-star-fill text-warning"></i>
                                 <i class="bi bi-star-fill text-warning"></i>
                                 <i class="bi bi-star-fill text-warning"></i>

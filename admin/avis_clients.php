@@ -49,7 +49,7 @@ function formatReviewDate($dateString) {
     <!-- SIDEBAR NAVIGATION -->
     <aside class="admin-sidebar">
         <div class="sidebar-header">
-            <a href="admin_dashboard.php" class="text-decoration-none">
+            <a href="../acceulle/acceulle.php" class="text-decoration-none">
                 <span class="logo-text">Soin<span class="logo-vital">Vital</span></span>
             </a>
         </div>

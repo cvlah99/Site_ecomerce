@@ -46,7 +46,7 @@ function formatFrenchDateOnly($dateString) {
 
     <aside class="admin-sidebar">
         <div class="sidebar-header">
-            <a href="admin_dashboard.php" class="text-decoration-none">
+            <a href="../acceulle/acceulle.php" class="text-decoration-none">
                 <span class="logo-text">Soin<span class="logo-vital">Vital</span></span>
             </a>
         </div>
@@ -139,7 +139,7 @@ function formatFrenchDateOnly($dateString) {
                             <?php if (count($promotions) > 0): ?>
                                 <?php foreach($promotions as $promo): ?>
                                     <?php 
-                                        $remise = rtrim(rtrim($promo['pourcentage_remise'], '0'), '.');
+                                        $remise = floatval($promo['pourcentage_remise']);
                                         
                                         // Status logic
                                         switch($promo['statut']) {
@@ -164,7 +164,8 @@ function formatFrenchDateOnly($dateString) {
                                 <tr>
                                     <td>
                                         <div class="d-flex align-items-center">
-                                            <img src="<?php echo htmlspecialchars($promo['produit_image']); ?>" alt="" class="rounded me-3" style="width: 40px; height: 40px; object-fit: cover;">
+                                            <?php $img_src = !empty($promo['image_produit']) ? $promo['image_produit'] : '../assets/images/default-product.png'; ?>
+                                            <img src="<?php echo htmlspecialchars($img_src); ?>" alt="" class="rounded me-3" style="width: 40px; height: 40px; object-fit: cover;">
                                             <div>
                                                 <h6 class="mb-0 fw-bold text-dark"><?php echo htmlspecialchars($promo['nom_produit']); ?></h6>
                                                 <small class="text-muted">Ancien: <?php echo number_format($promo['prix_original'], 2); ?> MAD &rarr; <span class="text-success fw-bold">Nouveau: <?php echo number_format($promo['prix_remise'], 2); ?> MAD</span></small>

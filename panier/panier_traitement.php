@@ -2,16 +2,37 @@
 session_start();
 require_once '../config/connexion_db.php';
 
+// 1. Check if user is logged in
 if(!isset($_SESSION['user_id'])){
     header("location:../connexion/connexion.php");
     exit();
 }
 
+// 2. Fetch the id_client corresponding to this user_id if it's not set in the session yet
+if (!isset($_SESSION['id_client'])) {
+    $stmt_cli = $pdo->prepare("SELECT id_client FROM clients WHERE id_utilisateur = ?");
+    $stmt_cli->execute([$_SESSION['user_id']]);
+    $client = $stmt_cli->fetch(PDO::FETCH_ASSOC);
+    
+    if ($client) {
+        $_SESSION['id_client'] = $client['id_client'];
+    } else {
+        // If no client profile is found (meaning the user is an admin or livreur)
+        echo "<script>
+                alert('Action refusée : Seuls les clients peuvent ajouter des articles au panier.'); 
+                window.location.href='../catalogue/catalogue.php';
+              </script>";
+        exit();
+    }
+}
+
+// 3. Check if we have the required POST data
 if(!isset($_POST['action'], $_POST['id_produit'])){
     header("location:panier.php");
     exit();
 }
 
+// 4. Now it's safe to assign the variables
 $id_client = $_SESSION['id_client'];
 $id_produit = intval($_POST['id_produit']);
 $action = $_POST['action'];
